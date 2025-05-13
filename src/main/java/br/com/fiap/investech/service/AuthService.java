@@ -4,16 +4,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import br.com.fiap.investech.model.Credentials;
 import br.com.fiap.investech.model.User;
+import br.com.fiap.investech.repository.UserRepository;
 
 @Service
-public class AuthService {
+public class AuthService implements UserDetailsService {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public User login(Credentials credentials) {
         Authentication auth = new UsernamePasswordAuthenticationToken(
@@ -21,6 +28,12 @@ public class AuthService {
             credentials.getPassword()
         );
         Authentication authenticated = authenticationManager.authenticate(auth);
-        return (User) authenticated.getPrincipal(); // cast seguro se User implementar UserDetails
+        return (User) authenticated.getPrincipal(); // seguro se User implementa UserDetails
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com email: " + email));
     }
 }

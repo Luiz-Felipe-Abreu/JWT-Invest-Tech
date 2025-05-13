@@ -1,38 +1,32 @@
 package br.com.fiap.investech.controller;
 
-import br.com.fiap.investech.model.Credentials;
-import br.com.fiap.investech.model.User;
-import br.com.fiap.investech.service.TokenService;
-
-import jakarta.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import br.com.fiap.investech.model.Credentials;
+import br.com.fiap.investech.model.User;
+import br.com.fiap.investech.service.AuthService;
+import br.com.fiap.investech.service.TokenService;
+
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     @Autowired
-    AuthenticationManager authenticationManager;
+    private AuthService authService;
 
     @Autowired
-    TokenService tokenService;
+    private TokenService tokenService;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody @Valid Credentials credentials) {
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(credentials.login(), credentials.password());
-
-        Authentication authentication = authenticationManager.authenticate(authenticationToken);
-
-        User user = (User) authentication.getPrincipal();
-        String token = tokenService.generateToken(user);
-
-        return ResponseEntity.ok(token);
+    public ResponseEntity<?> login(@RequestBody Credentials credentials) {
+        try {
+            User user = authService.login(credentials); // autentica
+            String token = tokenService.generateToken(user); // gera token
+            return ResponseEntity.ok().body(token);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Credenciais inválidas.");
+        }
     }
 }
