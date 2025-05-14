@@ -1,8 +1,8 @@
 package br.com.fiap.investech.model;
 
 import java.util.Collection;
-import java.util.Collections;
 
+import java.util.List;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -60,7 +60,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList(); // sem roles por enquanto
+        return List.of(); // ou uma lista com roles, se quiser implementar permissões
     }
 
     @Override

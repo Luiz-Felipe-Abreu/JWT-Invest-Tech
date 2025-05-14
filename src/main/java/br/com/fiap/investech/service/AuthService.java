@@ -17,18 +17,15 @@ import br.com.fiap.investech.repository.UserRepository;
 public class AuthService implements UserDetailsService {
 
     @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
     private UserRepository userRepository;
 
-    public User login(Credentials credentials) {
+    public User login(Credentials credentials, AuthenticationManager authenticationManager) {
         Authentication auth = new UsernamePasswordAuthenticationToken(
             credentials.getEmail(),
             credentials.getPassword()
         );
         Authentication authenticated = authenticationManager.authenticate(auth);
-        return (User) authenticated.getPrincipal(); // seguro se User implementa UserDetails
+        return (User) authenticated.getPrincipal();
     }
 
     @Override

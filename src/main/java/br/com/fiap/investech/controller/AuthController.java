@@ -2,6 +2,7 @@ package br.com.fiap.investech.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,12 +28,16 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
     // Endpoint de login
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Credentials credentials) {
         try {
-            User user = authService.login(credentials); // autentica
-            String token = tokenService.generateToken(user); // gera token
+            // ✅ PASSA o AuthenticationManager para evitar injeção circular
+            User user = authService.login(credentials, authenticationManager);
+            String token = tokenService.generateToken(user);
             return ResponseEntity.ok().body(token);
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Credenciais inválidas.");
@@ -46,7 +51,6 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Usuário já cadastrado.");
         }
 
-        // Criptografa a senha antes de salvar
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
         return ResponseEntity.ok(savedUser);
