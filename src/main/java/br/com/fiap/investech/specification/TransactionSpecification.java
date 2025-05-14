@@ -1,7 +1,6 @@
 package br.com.fiap.investech.specification;
 
 import br.com.fiap.investech.model.Transaction;
-import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
@@ -27,5 +26,16 @@ public class TransactionSpecification {
     public static Specification<Transaction> hasValueLessThan(BigDecimal maxValue) {
         return (root, query, cb) ->
                 maxValue == null ? null : cb.lessThanOrEqualTo(root.get("value"), maxValue);
+    }
+
+    public static Specification<Transaction> descriptionContains(String description) {
+        return (root, query, cb) ->
+                description == null ? null :
+                cb.like(cb.lower(root.get("description")), "%" + description.toLowerCase() + "%");
+    }
+
+    public static Specification<Transaction> dateIs(LocalDate date) {
+        return (root, query, cb) ->
+                date == null ? null : cb.equal(root.get("date"), date);
     }
 }
