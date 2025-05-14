@@ -1,54 +1,45 @@
 package br.com.fiap.investech.service;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.auth0.jwt.interfaces.JWTVerifier;
 
+import br.com.fiap.investech.controller.AuthController.Token;
 import br.com.fiap.investech.model.User;
-import br.com.fiap.investech.repository.UserRepository;
+import br.com.fiap.investech.model.UserRole;
+
 
 @Service
 public class TokenService {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    Instant expiresAt = LocalDateTime.now().plusMinutes(120).toInstant(ZoneOffset.ofHours(-3));
+    Algorithm algorithm = Algorithm.HMAC256("secret");
 
-    @Value("${jwt.expiration}")
-    private long expiration;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    public String generateToken(User user) {
-        Algorithm algorithm = Algorithm.HMAC256(secret);
-
-        return JWT.create()
-            .withSubject(user.getEmail())
-            .withIssuedAt(new Date())
-            .withExpiresAt(Date.from(Instant.now().plus(expiration, ChronoUnit.MILLIS)))
+    public Token createToken(User user){
+        var jwt = JWT.create()
+            .withSubject(user.getId().toString())
+            .withClaim("email", user.getEmail())
+            .withClaim("role", user.getRole().toString())
+            .withExpiresAt(expiresAt)
             .sign(algorithm);
+
+        return new Token(jwt, user.getEmail());
+
     }
 
-    public User validateToken(String token) {
-        try {
-            Algorithm algorithm = Algorithm.HMAC256(secret);
-            JWTVerifier verifier = JWT.require(algorithm).build();
-            DecodedJWT decodedJWT = verifier.verify(token);
-            String email = decodedJWT.getSubject();
+    public User getUserFromToken(String token) {
+        var verifiedToken = JWT.require(algorithm).build().verify(token);
+        return User.builder()
+                .id(Long.valueOf(verifiedToken.getSubject()))
+                .email(verifiedToken.getClaim("email").toString())
+                .role(UserRole.valueOf( verifiedToken.getClaim("role").asString() ))
+                .build();
 
-            return userRepository.findByEmail(email).orElse(null);
-        } catch (JWTVerificationException e) {
-            return null; // Token inválido
-        }
     }
+    
 }

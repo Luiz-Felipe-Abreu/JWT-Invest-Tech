@@ -7,22 +7,35 @@ import java.util.List;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import br.com.fiap.investech.model.Category;
 import br.com.fiap.investech.model.Transaction;
+import br.com.fiap.investech.model.User;
+import br.com.fiap.investech.model.UserRole;
 import br.com.fiap.investech.repository.CategoryRepository;
 import br.com.fiap.investech.repository.TransactionRepository;
+import br.com.fiap.investech.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 
 @Component
 public class DatabaseSeeder {
+
+    private final PasswordEncoder passwordEncoder;
+
+    private final UserRepository userRepository;
 
     @Autowired
     private CategoryRepository categoryRepository;
 
     @Autowired 
     private TransactionRepository transactionRepository;
+
+    DatabaseSeeder(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @PostConstruct
     public void init() {
@@ -51,6 +64,18 @@ public class DatabaseSeeder {
 
         transactionRepository.saveAll(transactions);
 
+         userRepository.saveAll(List.of(
+            User.builder()
+                .email("luiz@gmail.com")
+                .password(passwordEncoder.encode("12345"))
+                .role(UserRole.ADMIN)
+                .build(),
+            User.builder()
+                .email("pedro@gmail.com")
+                .password(passwordEncoder.encode("12345"))
+                .role(UserRole.USER)
+                .build()
+        ));
 
     }
 
